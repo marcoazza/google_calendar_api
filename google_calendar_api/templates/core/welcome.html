@@ -13,5 +13,8 @@
       <tr><td>{{ item|safe }}</td></tr>
       {% endfor %}
     </table>
+    {% if user.is_authenticated %}
+      <p><a href="{% url 'logout' %}">logout</a></p>
+    {% endif %}
   </body>
 </html>
