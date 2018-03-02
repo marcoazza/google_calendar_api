@@ -140,5 +140,11 @@ with open(GOOGLE_OAUTH2_CLIENT_SECRETS_JSON, 'r') as secrets:
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = GOOGLE_SECRETS.get('web').get('client_id')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = GOOGLE_SECRETS.get('web').get('client_secret')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/calendar'
+]
+
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'

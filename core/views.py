@@ -12,6 +12,7 @@ from oauth2client.contrib import xsrfutil
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
 import datetime
+import requests
 
 FLOW = flow_from_clientsecrets(
     settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON,
@@ -21,20 +22,30 @@ FLOW = flow_from_clientsecrets(
 
 @login_required
 def index(request):
-    storage = DjangoORMStorage(CredentialsModel, 'id', request.user, 'credential')
-    credential = storage.get()
-    if credential is None or credential.invalid:
-        FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY, request.user)
-        authorize_url = FLOW.step1_get_authorize_url()
-        return HttpResponseRedirect(authorize_url)
-    else:
-        http = httplib2.Http()
-        http = credential.authorize(http)
-        service = build("calendar", "v3", http=http, cache_discovery=False)
-        now = datetime.datetime.utcnow().isoformat() + 'Z'
-        events = service.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute()
-        logging.info(events)
-        return render(request, 'core/welcome.html', {'events': events, })
+    # user = User.objects.get(...)
+    print('User', request.user.social_auth.all())
+    social = request.user.social_auth.get(provider='google-oauth2')
+    response = requests.get(
+        'https://www.googleapis.com/calendar/v3/calendars/primary',
+        params={'access_token': social.extra_data['access_token']}
+    )
+    events = response.json()
+    print('>>>>>>>>>>>>', events)
+    return render(request, 'core/welcome.html', {'events': events, })
+    # storage = DjangoORMStorage(CredentialsModel, 'id', request.user, 'credential')
+    # credential = storage.get()
+    # if credential is None or credential.invalid:
+    #     FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY, request.user)
+    #     authorize_url = FLOW.step1_get_authorize_url()
+    #     return HttpResponseRedirect(authorize_url)
+    # else:
+    #     http = httplib2.Http()
+    #     http = credential.authorize(http)
+    #     service = build("calendar", "v3", http=http, cache_discovery=False)
+    #     now = datetime.datetime.utcnow().isoformat() + 'Z'
+    #     events = service.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute()
+    #     logging.info(events)
+    #     return render(request, 'core/welcome.html', {'events': events, })
 
 
 @login_required
